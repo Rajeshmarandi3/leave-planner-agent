@@ -13,7 +13,7 @@ const ReasoningPanel = ({ selectedDay }) => {
       <AnimatePresence mode="wait">
         {selectedDay ? (
           <motion.div
-            key={selectedDay.day}
+            key={selectedDay.date.toString()}
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
@@ -22,25 +22,25 @@ const ReasoningPanel = ({ selectedDay }) => {
             <div className="bg-white bg-opacity-5 p-4 rounded-2xl border border-border-glass">
               <h3 className="flex items-center gap-2 text-accent-secondary font-medium mb-2">
                 <Info className="w-4 h-4" />
-                Context for April {selectedDay.day}
+                Context for {new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric' }).format(selectedDay.date)}
               </h3>
               <p className="text-sm text-text-muted leading-relaxed">
-                {selectedDay.isHoliday 
-                  ? "This is a gazetted national holiday (Good Friday). It provides a natural anchor for a long weekend."
-                  : selectedDay.isRecommended 
-                  ? "I recommend taking this day off to bridge the gap between the mid-week holiday and the upcoming weekend. This maximizes your 'break-to-leave' ratio."
+                {selectedDay.holiday 
+                  ? `This is a holiday: ${selectedDay.holiday.name}. A great anchor for your break.`
+                  : selectedDay.recommendation 
+                  ? selectedDay.recommendation.reason
                   : "A standard working day. No specific optimization triggers found for this date."}
               </p>
             </div>
 
-            {selectedDay.isRecommended && (
+            {selectedDay.recommendation && (
               <div className="bg-accent-primary bg-opacity-10 p-4 rounded-2xl border border-accent-primary border-opacity-30">
                 <h3 className="flex items-center gap-2 text-accent-primary font-medium mb-2">
                   <MapPin className="w-4 h-4" />
-                  Travel Recommendation
+                  Expert Travel Tip
                 </h3>
                 <p className="text-sm text-text-active leading-relaxed">
-                  Based on your interest in <strong>Mountains</strong>, this 5-day block (Apr 11-15) is perfect for a quick escape to the Western Ghats before the monsoon season starts.
+                  {selectedDay.recommendation.travel_tip}
                 </p>
               </div>
             )}

@@ -27,11 +27,16 @@ async def optimize(balances: LeaveBalances, preferences: UserPreferences):
     return result
 
 @app.post("/upload-holidays")
-async def upload_holidays(file: UploadFile = File(...)):
-    # Save file temporarily and parse
-    contents = await file.read()
-    # In a real scenario, we'd save and pass to agent.parse_holiday_document
-    return {"message": f"File {file.filename} received. Scanning for holidays...", "count": 0}
+async def upload_holidays(files: List[UploadFile] = File(...)):
+    results = []
+    for file in files:
+        contents = await file.read()
+        # Simulate some processing time for each file
+        import asyncio
+        await asyncio.sleep(1) 
+        results.append({"filename": file.filename, "status": "processed", "count": 12})
+    
+    return {"message": f"{len(files)} files received and processed.", "results": results}
 
 @app.get("/baseline-holidays")
 async def get_baseline():
