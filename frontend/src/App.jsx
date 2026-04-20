@@ -11,12 +11,13 @@ import { Info, MapPin } from 'lucide-react';
 
 function App() {
   const [balances, setBalances] = useState({ paid: 15, casual: 8, sick: 10 });
-  const [selectedDay, setSelectedDay] = useState(null);
+  const [selectedBreak, setSelectedBreak] = useState(null);
   const [isAnalyzed, setIsAnalyzed] = useState(false);
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [planSummary, setPlanSummary] = useState('');
-  const [recommendations, setRecommendations] = useState([]);
+  const [vacationBlocks, setVacationBlocks] = useState([]);
   const [holidays, setHolidays] = useState([]);
+  const [audit, setAudit] = useState(null);
 
   const updateBalance = (type, value) => {
     setBalances(prev => ({ ...prev, [type]: parseInt(value) || 0 }));
@@ -38,14 +39,16 @@ function App() {
       
       const data = await response.json();
       
-      // Filter out past dates for 2026 planning
-      const now = new Date();
-      const filteredRecommendations = (data.recommended_days || []).filter(d => new Date(d.date) >= now);
-      const filteredHolidays = (data.holidays || []).filter(d => new Date(d.date) >= now);
-
       setPlanSummary(data.summary || 'Expert plan generated.');
-      setRecommendations(filteredRecommendations);
-      setHolidays(filteredHolidays);
+      setVacationBlocks(data.vacation_blocks || []);
+      setHolidays(data.holidays || []);
+      setAudit(data.balance_audit);
+      
+      // Auto-select the first break
+      if (filteredBlocks.length > 0) {
+        setSelectedBreak(filteredBlocks[0]);
+      }
+      
       setIsAnalyzed(true);
     } catch (error) {
       console.error("Optimization failed:", error);
@@ -100,16 +103,17 @@ function App() {
                           key={i}
                           month={i}
                           year={2026}
-                          onDayClick={setSelectedDay}
+                          onBreakClick={setSelectedBreak}
                           holidays={holidays}
-                          recommendedDays={recommendations}
+                          vacationBlocks={vacationBlocks}
+                          selectedBreak={selectedBreak}
                         />
                       ))}
                     </div>
                   </div>
                   <div className="xl:w-1/3">
                     <div className="sticky top-8">
-                      <ReasoningPanel selectedDay={selectedDay} />
+                      <ReasoningPanel selectedBreak={selectedBreak} audit={audit} />
                     </div>
                   </div>
                 </div>

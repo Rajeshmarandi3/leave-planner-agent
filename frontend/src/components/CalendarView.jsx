@@ -3,7 +3,7 @@ import { Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { format, startOfMonth, getDay, getDaysInMonth, isWeekend, isSameDay, addDays, subDays } from 'date-fns';
 
-const CalendarView = ({ month, year, recommendedDays = [], holidays = [], onDayClick }) => {
+const CalendarView = ({ month, year, vacationBlocks = [], holidays = [], onBreakClick, selectedBreak }) => {
   const date = new Date(year, month, 1);
   const now = new Date();
   const monthName = format(date, 'MMMM');
@@ -12,28 +12,13 @@ const CalendarView = ({ month, year, recommendedDays = [], holidays = [], onDayC
 
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
-  // Helper to check if a day is a break (holiday or recommended)
-  const isBaseBreak = (d) => {
-    return holidays.some(h => isSameDay(new Date(h.date), d)) || 
-           recommendedDays.some(r => isSameDay(new Date(r.date), d));
-  };
-
-  // Helper to check if a day is part of a contiguous break (including weekends)
-  const isPartOfBreak = (d) => {
-    if (isBaseBreak(d)) return true;
-    if (!isWeekend(d)) return false;
-
-    // For weekends, check if they are adjacent to a break day
-    // This scales to check if it's connected to a holiday/recommendation chain
-    let checkPrev = subDays(d, 1);
-    while (isWeekend(checkPrev)) checkPrev = subDays(checkPrev, 1);
-    if (isBaseBreak(checkPrev)) return true;
-
-    let checkNext = addDays(d, 1);
-    while (isWeekend(checkNext)) checkNext = addDays(checkNext, 1);
-    if (isBaseBreak(checkNext)) return true;
-
-    return false;
+  // Helper to find a block for a date
+  const getBlockForDate = (d) => {
+    return vacationBlocks.find(b => {
+      const start = new Date(b.start_date);
+      const end = new Date(b.end_date);
+      return (d >= start && d <= end);
+    });
   };
 
   return (
@@ -57,12 +42,15 @@ const CalendarView = ({ month, year, recommendedDays = [], holidays = [], onDayC
         {days.map(day => {
           const currentDay = new Date(year, month, day);
           const holidayMatch = holidays.find(h => isSameDay(new Date(h.date), currentDay));
-          const recMatch = recommendedDays.find(r => isSameDay(new Date(r.date), currentDay));
+          const blockMatch = getBlockForDate(currentDay);
           const isPast = currentDay < now && !isSameDay(currentDay, now);
           
-          const inBreak = isPartOfBreak(currentDay);
-          const prevInBreak = isPartOfBreak(subDays(currentDay, 1)) && getDay(currentDay) !== 0;
-          const nextInBreak = isPartOfBreak(addDays(currentDay, 1)) && getDay(currentDay) !== 6;
+          const isSelected = selectedBreak && blockMatch && 
+                            selectedBreak.start_date === blockMatch.start_date;
+          
+          const inBreak = !!blockMatch;
+          const prevInBreak = getBlockForDate(subDays(currentDay, 1))?.start_date === blockMatch?.start_date && getDay(currentDay) !== 0;
+          const nextInBreak = getBlockForDate(addDays(currentDay, 1))?.start_date === blockMatch?.start_date && getDay(currentDay) !== 6;
 
           // Determine rounding
           let roundedClasses = "rounded-lg";
@@ -76,19 +64,24 @@ const CalendarView = ({ month, year, recommendedDays = [], holidays = [], onDayC
             <motion.div
               key={day}
               whileHover={!isPast ? { scale: 1.1, zIndex: 10 } : {}}
-              onClick={() => !isPast && onDayClick({ date: currentDay, holiday: holidayMatch, recommendation: recMatch })}
+              onClick={() => {
+                if (!isPast && blockMatch) onBreakClick(blockMatch);
+              }}
               className={`
                 aspect-square flex flex-col items-center justify-center cursor-pointer text-[11px] font-medium transition-all relative
                 ${inBreak ? 'bg-accent-primary bg-opacity-20 text-white' : ''}
                 ${holidayMatch ? 'bg-emerald-500 bg-opacity-40' : ''}
+                ${isSelected ? 'ring-2 ring-accent-secondary ring-inset bg-opacity-40 shadow-[0_0_15px_rgba(20,184,166,0.2)]' : ''}
                 ${isPast ? 'opacity-20 grayscale pointer-events-none' : 'text-text-muted'}
                 ${roundedClasses}
               `}
             >
-              <span className={holidayMatch || recMatch ? 'font-bold underline underline-offset-2' : ''}>
+              <span className={holidayMatch || blockMatch ? 'font-bold underline underline-offset-2' : ''}>
                 {day}
               </span>
-              {recMatch && <div className="absolute top-1 right-1 w-1 h-1 bg-accent-primary rounded-full" />}
+              {blockMatch?.leave_days?.some(ld => isSameDay(new Date(ld), currentDay)) && (
+                <div className="absolute top-1 right-1 w-1 h-1 bg-accent-primary rounded-full" />
+              )}
             </motion.div>
           );
         })}
