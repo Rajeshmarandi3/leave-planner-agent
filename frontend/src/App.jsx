@@ -9,8 +9,11 @@ import LoadingSkeleton from './components/LoadingSkeleton';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Info, MapPin } from 'lucide-react';
 
+// The user's holiday list — this is the single source of truth.
+// It will be populated from the uploaded file via Gemini extraction.
+
 function App() {
-  const [balances, setBalances] = useState({ paid: 15, casual: 8, sick: 10 });
+  const [balances, setBalances] = useState({ paid: 0, casual: 0, sick: 0 });
   const [selectedBreak, setSelectedBreak] = useState(null);
   const [isAnalyzed, setIsAnalyzed] = useState(false);
   const [isOptimizing, setIsOptimizing] = useState(false);
@@ -18,6 +21,25 @@ function App() {
   const [vacationBlocks, setVacationBlocks] = useState([]);
   const [holidays, setHolidays] = useState([]);
   const [audit, setAudit] = useState(null);
+
+  const handleUploadSuccess = (data) => {
+    if (data.balances) {
+      setBalances(prev => ({
+        paid: Math.max(prev.paid, data.balances.paid || 0),
+        casual: Math.max(prev.casual, data.balances.casual || 0),
+        sick: Math.max(prev.sick, data.balances.sick || 0)
+      }));
+    }
+    if (data.holidays && data.holidays.length > 0) {
+      setHolidays(prev => {
+        const merged = [...prev, ...data.holidays];
+        // Remove duplicates by date to ensure clean list
+        const uniqueMap = new Map();
+        merged.forEach(h => uniqueMap.set(h.date, h));
+        return Array.from(uniqueMap.values());
+      });
+    }
+  };
 
   const updateBalance = (type, value) => {
     setBalances(prev => ({ ...prev, [type]: parseInt(value) || 0 }));
@@ -33,7 +55,8 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           balances: balances,
-          preferences: { interests: ['Nature', 'Mountains'], max_paid_leave_utilization: 1.0 }
+          preferences: { interests: ['Nature', 'Mountains'], max_paid_leave_utilization: 1.0 },
+          holidays: holidays
         })
       });
       
@@ -41,12 +64,14 @@ function App() {
       
       setPlanSummary(data.summary || 'Expert plan generated.');
       setVacationBlocks(data.vacation_blocks || []);
-      setHolidays(data.holidays || []);
+      // Use holidays from the response, but fall back to our current state
+      setHolidays(data.holidays && data.holidays.length > 0 ? data.holidays : holidays);
       setAudit(data.balance_audit);
       
       // Auto-select the first break
-      if (filteredBlocks.length > 0) {
-        setSelectedBreak(filteredBlocks[0]);
+      const blocks = data.vacation_blocks || [];
+      if (blocks.length > 0) {
+        setSelectedBreak(blocks[0]);
       }
       
       setIsAnalyzed(true);
@@ -58,10 +83,13 @@ function App() {
     }
   };
 
+  // Calculate total leave days for the legend
+  const totalLeaveDays = vacationBlocks.reduce((sum, b) => sum + (b.leave_days?.length || 0), 0);
+
   return (
     <Layout>
       <div className="flex flex-col items-center">
-        <CommandCenter onExecute={handleExecute} />
+        <CommandCenter onExecute={handleExecute} onUploadSuccess={handleUploadSuccess} />
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -86,14 +114,35 @@ function App() {
                     <div className="pt-6 border-t border-white border-opacity-5">
                       <h4 className="text-white font-bold text-sm mb-2">Expert Recommendation:</h4>
                       <p className="text-text-muted text-sm italic">
-                        "As your leave planner expert, I've prioritized your {balances.paid} paid days and {balances.casual} casual days 
-                        to ensure optimal coverage every month. Sick leave is fully reserved for emergencies as requested."
+                        "As your leave planner expert, I've utilized all {balances.paid} paid days and {balances.casual} casual days 
+                        ({totalLeaveDays} total weekday leaves) across {vacationBlocks.length} vacation blocks to ensure optimal coverage every month. 
+                        Sick leave is fully reserved for emergencies as requested."
                       </p>
                     </div>
                   )}
                 </div>
 
                 <BalanceManager balances={balances} onUpdate={updateBalance} />
+
+                {/* Calendar Legend */}
+                <div className="flex flex-wrap items-center gap-6 px-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded bg-accent-primary bg-opacity-30 border border-accent-primary border-opacity-40" />
+                    <span className="text-xs text-text-muted font-medium">Paid Leave</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded bg-indigo-500 bg-opacity-30 border border-indigo-500 border-opacity-40" />
+                    <span className="text-xs text-text-muted font-medium">Casual Leave</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded bg-emerald-500 bg-opacity-30 border border-emerald-500 border-opacity-40" />
+                    <span className="text-xs text-text-muted font-medium">Public Holiday</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded border border-amber-400 border-opacity-40" style={{ background: 'rgba(251, 191, 36, 0.15)' }} />
+                    <span className="text-xs text-text-muted font-medium">Weekend</span>
+                  </div>
+                </div>
                 
                 <div className="flex flex-col xl:flex-row gap-8">
                   <div className="xl:w-2/3 space-y-8">

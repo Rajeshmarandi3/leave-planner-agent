@@ -3,6 +3,12 @@ import { Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { format, startOfMonth, getDay, getDaysInMonth, isWeekend, isSameDay, addDays, subDays } from 'date-fns';
 
+const parseDate = (dStr) => {
+  if (!dStr) return new Date();
+  const [y, m, d] = dStr.split('T')[0].split('-');
+  return new Date(y, m - 1, d);
+};
+
 const CalendarView = ({ month, year, vacationBlocks = [], holidays = [], onBreakClick, selectedBreak }) => {
   const date = new Date(year, month, 1);
   const now = new Date();
@@ -15,22 +21,47 @@ const CalendarView = ({ month, year, vacationBlocks = [], holidays = [], onBreak
   // Helper to find a block for a date
   const getBlockForDate = (d) => {
     return vacationBlocks.find(b => {
-      const start = new Date(b.start_date);
-      const end = new Date(b.end_date);
+      const start = parseDate(b.start_date);
+      const end = parseDate(b.end_date);
       return (d >= start && d <= end);
     });
   };
+
+  // Count leave days in this month for the legend
+  const monthLeaveDays = vacationBlocks.reduce((count, block) => {
+    return count + (block.leave_days || []).filter(ld => {
+      const d = parseDate(ld);
+      return d.getMonth() === month && d.getFullYear() === year;
+    }).length;
+  }, 0);
+
+  const monthHolidayCount = holidays.filter(h => {
+    const d = parseDate(h.date);
+    return d.getMonth() === month && d.getFullYear() === year;
+  }).length;
 
   return (
     <div className="glass p-4 rounded-2xl border border-white border-opacity-5 flex flex-col h-full hover:border-opacity-20 transition-all">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-bold text-white">{monthName}</h3>
-        <span className="text-[10px] text-text-muted font-mono">{year}</span>
+        <div className="flex items-center gap-2">
+          {monthLeaveDays > 0 && (
+            <span className="text-[9px] bg-accent-primary bg-opacity-20 text-accent-primary px-2 py-0.5 rounded-full font-bold">
+              {monthLeaveDays}L
+            </span>
+          )}
+          {monthHolidayCount > 0 && (
+            <span className="text-[9px] bg-emerald-500 bg-opacity-20 text-emerald-400 px-2 py-0.5 rounded-full font-bold">
+              {monthHolidayCount}H
+            </span>
+          )}
+          <span className="text-[10px] text-text-muted font-mono">{year}</span>
+        </div>
       </div>
 
       <div className="grid grid-cols-7 gap-1 text-[10px] mb-2">
-        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => (
-          <div key={d} className="text-center text-text-muted font-bold opacity-30">{d}</div>
+        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
+          <div key={`${d}-${i}`} className={`text-center font-bold ${i === 0 || i === 6 ? 'text-amber-400 opacity-60' : 'text-text-muted opacity-30'}`}>{d}</div>
         ))}
       </div>
 
@@ -41,13 +72,18 @@ const CalendarView = ({ month, year, vacationBlocks = [], holidays = [], onBreak
 
         {days.map(day => {
           const currentDay = new Date(year, month, day);
-          const holidayMatch = holidays.find(h => isSameDay(new Date(h.date), currentDay));
+          const holidayMatch = holidays.find(h => isSameDay(parseDate(h.date), currentDay));
           const blockMatch = getBlockForDate(currentDay);
           const isPast = currentDay < now && !isSameDay(currentDay, now);
+          const isWeekendDay = isWeekend(currentDay);
           
           const isSelected = selectedBreak && blockMatch && 
                             selectedBreak.start_date === blockMatch.start_date;
           
+          const leaveDetail = blockMatch?.leave_details?.find(ld => isSameDay(parseDate(ld.date), currentDay));
+          const isLeaveDay = !!leaveDetail;
+          const leaveType = leaveDetail?.type;
+
           const inBreak = !!blockMatch;
           const prevInBreak = getBlockForDate(subDays(currentDay, 1))?.start_date === blockMatch?.start_date && getDay(currentDay) !== 0;
           const nextInBreak = getBlockForDate(addDays(currentDay, 1))?.start_date === blockMatch?.start_date && getDay(currentDay) !== 6;
@@ -60,6 +96,41 @@ const CalendarView = ({ month, year, vacationBlocks = [], holidays = [], onBreak
             else if (nextInBreak) roundedClasses = "rounded-l-lg rounded-r-none";
           }
 
+          // Build cell classes based on priority:
+          // 1. Paid Leave day (purple accent)
+          // 2. Casual Leave day (indigo/blue accent)
+          // 3. Public holiday (emerald green)
+          // 4. Weekend (amber/warm — distinct color)
+          let cellBg = '';
+          let textColor = 'text-text-muted';
+          let fontStyle = '';
+          let cellStyle = {};
+
+          if (isLeaveDay) {
+            if (leaveType === 'paid') {
+              cellBg = 'bg-accent-primary bg-opacity-30';
+              textColor = 'text-white';
+            } else {
+              cellBg = 'bg-indigo-500 bg-opacity-30';
+              textColor = 'text-indigo-200';
+            }
+            fontStyle = 'font-bold';
+          } else if (holidayMatch) {
+            // Public holidays — emerald green
+            cellBg = 'bg-emerald-500 bg-opacity-30';
+            textColor = 'text-emerald-300';
+            fontStyle = 'font-bold';
+          } else if (isWeekendDay) {
+            // Weekends — warm amber/orange tint (clearly different)
+            cellStyle = { background: 'rgba(251, 191, 36, 0.15)' };
+            textColor = 'text-amber-400';
+            fontStyle = 'font-medium';
+          } else if (inBreak) {
+            // In break range but a regular day
+            cellBg = 'bg-accent-primary bg-opacity-10';
+            textColor = 'text-white';
+          }
+
           return (
             <motion.div
               key={day}
@@ -69,18 +140,23 @@ const CalendarView = ({ month, year, vacationBlocks = [], holidays = [], onBreak
               }}
               className={`
                 aspect-square flex flex-col items-center justify-center cursor-pointer text-[11px] font-medium transition-all relative
-                ${inBreak ? 'bg-accent-primary bg-opacity-20 text-white' : ''}
-                ${holidayMatch ? 'bg-emerald-500 bg-opacity-40' : ''}
-                ${isSelected ? 'ring-2 ring-accent-secondary ring-inset bg-opacity-40 shadow-[0_0_15px_rgba(20,184,166,0.2)]' : ''}
-                ${isPast ? 'opacity-20 grayscale pointer-events-none' : 'text-text-muted'}
+                ${cellBg}
+                ${textColor}
+                ${isSelected ? 'ring-2 ring-accent-secondary ring-inset shadow-[0_0_15px_rgba(20,184,166,0.2)]' : ''}
+                ${isPast ? 'opacity-20 grayscale pointer-events-none' : ''}
                 ${roundedClasses}
               `}
+              style={cellStyle}
+              title={holidayMatch ? holidayMatch.name : isLeaveDay ? 'Leave Day' : isWeekendDay ? 'Weekend' : ''}
             >
-              <span className={holidayMatch || blockMatch ? 'font-bold underline underline-offset-2' : ''}>
+              <span className={`${fontStyle} ${(holidayMatch || isLeaveDay) ? 'underline underline-offset-2' : ''}`}>
                 {day}
               </span>
-              {blockMatch?.leave_days?.some(ld => isSameDay(new Date(ld), currentDay)) && (
-                <div className="absolute top-1 right-1 w-1 h-1 bg-accent-primary rounded-full" />
+              {isLeaveDay && (
+                <div className="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-accent-primary rounded-full shadow-[0_0_4px_rgba(139,92,246,0.6)]" />
+              )}
+              {holidayMatch && !isLeaveDay && (
+                <div className="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-emerald-400 rounded-full shadow-[0_0_4px_rgba(52,211,153,0.6)]" />
               )}
             </motion.div>
           );

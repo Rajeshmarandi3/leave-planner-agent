@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Paperclip, Sparkles, Send, Upload, FileText, X, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const CommandCenter = ({ onExecute }) => {
+const CommandCenter = ({ onExecute, onUploadSuccess }) => {
   const [inputValue, setInputValue] = useState('');
   const [uploadingFiles, setUploadingFiles] = useState([]);
   const fileInputRef = useRef(null);
@@ -51,6 +51,16 @@ const CommandCenter = ({ onExecute }) => {
     xhr.onload = () => {
       if (xhr.status === 200) {
         updateFileState(id, { progress: 100, status: 'completed' });
+        
+        try {
+          const responseData = JSON.parse(xhr.responseText);
+          if (onUploadSuccess) {
+            onUploadSuccess(responseData);
+          }
+        } catch (e) {
+          console.error("Failed to parse upload response", e);
+        }
+
         // Auto-remove completed files after 3 seconds
         setTimeout(() => {
           removeFile(id);
@@ -120,7 +130,7 @@ const CommandCenter = ({ onExecute }) => {
             className="flex items-center gap-1 cursor-pointer hover:text-white transition-colors"
             onClick={handleFileClick}
           >
-            <Upload className="w-3 h-3" /> Attach CSV/PDF
+            <Upload className="w-3 h-3" /> Attach CSV/PDF/Image
           </span>
           <span className="flex items-center gap-1"><Send className="w-3 h-3" /> Press Enter to Plan</span>
         </div>

@@ -20,16 +20,32 @@ class Holiday(BaseModel):
     date: str
     name: str
 
+class LeaveDetail(BaseModel):
+    date: str
+    type: str  # "paid" or "casual"
+
 class VacationBlock(BaseModel):
     name: Optional[str] = "Planned Break"
     start_date: str
     end_date: str
     leave_days: List[str]
+    leave_details: List[LeaveDetail] = []
     reason: str
     travel_tip: Optional[str] = None
+
+class OptimizeRequest(BaseModel):
+    balances: LeaveBalances
+    preferences: UserPreferences
+    holidays: Optional[List[Holiday]] = None
 
 class OptimizationResponse(BaseModel):
     vacation_blocks: List[VacationBlock]
     holidays: List[Holiday]
     summary: str
     balance_audit: Optional[BalanceAudit] = None
+
+class UploadResponse(BaseModel):
+    balances: LeaveBalances
+    holidays: List[Holiday]
+    message: str
+
