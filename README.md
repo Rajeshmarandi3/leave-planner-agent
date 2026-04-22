@@ -2,7 +2,7 @@
 
 Maximize your holidays with AI-driven intelligence.
 
-![Leave Planner Agent Hero](frontend/src/assets/leave-planner-ui.png)
+![Leave Planner Agent Hero](frontend/src/assets/leave-planner-agent.gif)
 
 ## Overview
 

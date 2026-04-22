@@ -138,10 +138,6 @@ function App() {
                     <div className="w-4 h-4 rounded bg-emerald-500 bg-opacity-30 border border-emerald-500 border-opacity-40" />
                     <span className="text-xs text-text-muted font-medium">Public Holiday</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded border border-amber-400 border-opacity-40" style={{ background: 'rgba(251, 191, 36, 0.15)' }} />
-                    <span className="text-xs text-text-muted font-medium">Weekend</span>
-                  </div>
                 </div>
                 
                 <div className="flex flex-col xl:flex-row gap-8">

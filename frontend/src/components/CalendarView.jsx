@@ -61,7 +61,7 @@ const CalendarView = ({ month, year, vacationBlocks = [], holidays = [], onBreak
 
       <div className="grid grid-cols-7 gap-1 text-[10px] mb-2">
         {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
-          <div key={`${d}-${i}`} className={`text-center font-bold ${i === 0 || i === 6 ? 'text-amber-400 opacity-60' : 'text-text-muted opacity-30'}`}>{d}</div>
+          <div key={`${d}-${i}`} className="text-center font-bold text-text-muted opacity-30">{d}</div>
         ))}
       </div>
 
@@ -120,11 +120,6 @@ const CalendarView = ({ month, year, vacationBlocks = [], holidays = [], onBreak
             cellBg = 'bg-emerald-500 bg-opacity-30';
             textColor = 'text-emerald-300';
             fontStyle = 'font-bold';
-          } else if (isWeekendDay) {
-            // Weekends — warm amber/orange tint (clearly different)
-            cellStyle = { background: 'rgba(251, 191, 36, 0.15)' };
-            textColor = 'text-amber-400';
-            fontStyle = 'font-medium';
           } else if (inBreak) {
             // In break range but a regular day
             cellBg = 'bg-accent-primary bg-opacity-10';
