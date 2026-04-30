@@ -37,6 +37,7 @@ class OptimizeRequest(BaseModel):
     balances: LeaveBalances
     preferences: UserPreferences
     holidays: Optional[List[Holiday]] = None
+    user_prompt: Optional[str] = ""  # User's natural language request for month preferences
 
 class OptimizationResponse(BaseModel):
     vacation_blocks: List[VacationBlock]

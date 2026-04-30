@@ -54,13 +54,16 @@ def _is_weekend(d: date) -> bool:
 
 class LeavePlanner:
     """Algorithmic leave planner that dynamically computes optimal vacation
-    blocks from ANY holiday list and ANY leave balance."""
+    blocks from ANY holiday list and ANY leave balance, with priority for user-specified months."""
 
-    def __init__(self, holiday_list: List[Dict], paid: int, casual: int, year: int = 2026):
+    def __init__(self, holiday_list: List[Dict], paid: int, casual: int, year: int = 2026, 
+                 preferred_months: Optional[List[int]] = None, user_prompt: str = ""):
         self.year = year
         self.paid_rem = paid
         self.casual_rem = casual
         self.total = paid + casual
+        self.preferred_months = preferred_months or []
+        self.user_prompt = user_prompt
 
         # Map to track which date is what type of leave
         self.leave_assignments: Dict[date, str] = {} 
@@ -204,7 +207,7 @@ class LeavePlanner:
         remaining = self.total
         blocks: List[Dict] = []
 
-        # Phase 1 — greedy bridge selection
+        # Phase 1 — greedy bridge selection with month prioritization
         for _ in range(50):
             if self.paid_rem + self.casual_rem <= 0:
                 break
@@ -213,8 +216,23 @@ class LeavePlanner:
             if not candidates:
                 break
 
-            candidates.sort(key=lambda c: (c["efficiency"], -len(c["leave_days"])),
-                            reverse=True)
+            # Prioritize candidates in user-specified months
+            if self.preferred_months:
+                # Score candidates by whether they fall in preferred months
+                def score_candidate(c):
+                    month_priority = 0
+                    if c["start"].month in self.preferred_months:
+                        month_priority = 1000  # High priority for preferred months
+                    # Also check if any leave days fall in preferred months
+                    for ld in c["leave_days"]:
+                        if ld.month in self.preferred_months:
+                            month_priority += 100
+                    return (month_priority, c["efficiency"], -len(c["leave_days"]))
+                
+                candidates.sort(key=score_candidate, reverse=True)
+            else:
+                candidates.sort(key=lambda c: (c["efficiency"], -len(c["leave_days"])),
+                                reverse=True)
 
             picked = None
             total_rem = self.paid_rem + self.casual_rem
@@ -234,10 +252,13 @@ class LeavePlanner:
                 self._consume_leaves(picked["leave_days"])
                 blocks.append(picked)
 
-        # Phase 2 — standalone long-weekends (Fri / Mon)
+        # Phase 2 — standalone long-weekends (Fri / Mon) with month prioritization
         if self.paid_rem + self.casual_rem > 0:
+            # Prioritize months based on user preference
+            month_order = self.preferred_months if self.preferred_months else [10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+            
             for target_weekday in (4, 0): 
-                for month in range(1, 13):
+                for month in month_order:
                     if self.paid_rem + self.casual_rem <= 0:
                         break
                     for day in range(1, 32):
@@ -255,11 +276,12 @@ class LeavePlanner:
                             blocks.append(self._make_candidate(
                                 "Long Weekend", [d], s, e, (e - s).days + 1))
 
-        # Phase 3 — Smart Fill: find largest gaps between existing blocks and fill them
+        # Phase 3 — Smart Fill: find largest gaps and fill them, respecting preferred months
         if self.paid_rem + self.casual_rem > 0:
-            # We want to distribute remaining leaves rather than clustering in January
-            # Iterate through months but skip those that already have many leave days
-            for month in [10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9]: # Random-ish order or prioritize end of year
+            # Prioritize months based on user preference
+            month_order = self.preferred_months if self.preferred_months else [10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+            
+            for month in month_order:
                 if self.paid_rem + self.casual_rem <= 0:
                     break
                 for day in range(1, 32):
@@ -363,17 +385,51 @@ class LeaveAgent:
         else:
             self.model = None
 
+    def _extract_months_from_prompt(self, user_prompt: str) -> List[int]:
+        """Extract month references from user prompt. Returns list of month numbers (1-12)."""
+        if not user_prompt:
+            return []
+        
+        month_map = {
+            'january': 1, 'jan': 1,
+            'february': 2, 'feb': 2,
+            'march': 3, 'mar': 3,
+            'april': 4, 'apr': 4,
+            'may': 5,
+            'june': 6, 'jun': 6,
+            'july': 7, 'jul': 7,
+            'august': 8, 'aug': 8,
+            'september': 9, 'sep': 9, 'sept': 9,
+            'october': 10, 'oct': 10,
+            'november': 11, 'nov': 11,
+            'december': 12, 'dec': 12
+        }
+        
+        prompt_lower = user_prompt.lower()
+        found_months = []
+        
+        for month_name, month_num in month_map.items():
+            if month_name in prompt_lower:
+                found_months.append(month_num)
+        
+        return sorted(list(set(found_months)))
+
     def get_national_holidays(self, year: int = 2026) -> List[Dict]:
         """Fetch Indian National/Gazetted holidays (fallback only)."""
         in_holidays = holidays_lib.India(years=year)
         return [{"date": str(d), "name": n} for d, n in sorted(in_holidays.items())]
 
-    async def optimize_leaves(self, balances: Dict, preferences: Dict, custom_holidays: List = None):
+    async def optimize_leaves(self, balances: Dict, preferences: Dict, custom_holidays: List = None,
+                              user_prompt: str = ""):
         """Generate an optimised leave plan.
 
         Priority: custom_holidays (user's uploaded list) → holidays.India() fallback.
         The plan is computed ALGORITHMICALLY so it works for any input.
+        User prompt is analyzed to extract month preferences for prioritization.
         """
+        # Extract month preferences from user prompt
+        preferred_months = self._extract_months_from_prompt(user_prompt)
+        
         # ── holiday source ──
         if custom_holidays and len(custom_holidays) > 0:
             all_holidays = custom_holidays
@@ -384,8 +440,10 @@ class LeaveAgent:
         casual = balances.get("casual", 0)
         sick = balances.get("sick", 0)
 
-        # ── run algorithmic planner ──
-        planner = LeavePlanner(all_holidays, paid, casual)
+        # ── run algorithmic planner with user preferences ──
+        planner = LeavePlanner(all_holidays, paid, casual, 
+                               preferred_months=preferred_months,
+                               user_prompt=user_prompt)
         vacation_blocks = planner.to_vacation_blocks()
 
         # ── audit ──

@@ -56,7 +56,8 @@ function App() {
         body: JSON.stringify({
           balances: balances,
           preferences: { interests: ['Nature', 'Mountains'], max_paid_leave_utilization: 1.0 },
-          holidays: holidays
+          holidays: holidays,
+          user_prompt: input || ""  // Pass user input as prompt for month preferences
         })
       });
       
@@ -93,7 +94,7 @@ function App() {
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        <div className="lg:col-span-3 space-y-8">
+        <div className="lg:col-span-4 space-y-8">
           <AnimatePresence>
             {isOptimizing && (
               <LoadingSkeleton />
@@ -104,16 +105,16 @@ function App() {
                 initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, ease: "easeOut" }}
-                className="space-y-8 w-full"
+                className="space-y-6 w-full"
               >
-                <div className="glass p-8 rounded-[40px] mb-8 border-white border-opacity-10">
-                  <h3 className="text-accent-primary font-bold uppercase tracking-widest text-xs mb-4">Expert Strategy Overview</h3>
-                  <p className="text-xl font-medium leading-relaxed mb-6">{planSummary}</p>
+                <div className="glass p-6 rounded-[40px] mb-6 border-white border-opacity-10">
+                  <h3 className="text-accent-primary font-bold uppercase tracking-widest text-[10px] mb-3">Expert Strategy Overview</h3>
+                  <p className="text-base font-medium leading-relaxed mb-4">{planSummary}</p>
                   
                   {isAnalyzed && balances.paid + balances.casual > 0 && (
-                    <div className="pt-6 border-t border-white border-opacity-5">
-                      <h4 className="text-white font-bold text-sm mb-2">Expert Recommendation:</h4>
-                      <p className="text-text-muted text-sm italic">
+                    <div className="pt-4 border-t border-white border-opacity-5">
+                      <h4 className="text-white font-bold text-xs mb-1">Expert Recommendation:</h4>
+                      <p className="text-text-muted text-xs italic leading-relaxed">
                         "As your leave planner expert, I've utilized all {balances.paid} paid days and {balances.casual} casual days 
                         ({totalLeaveDays} total weekday leaves) across {vacationBlocks.length} vacation blocks to ensure optimal coverage every month. 
                         Sick leave is fully reserved for emergencies as requested."
@@ -125,40 +126,45 @@ function App() {
                 <BalanceManager balances={balances} onUpdate={updateBalance} />
 
                 {/* Calendar Legend */}
-                <div className="flex flex-wrap items-center gap-6 px-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded bg-accent-primary bg-opacity-30 border border-accent-primary border-opacity-40" />
-                    <span className="text-xs text-text-muted font-medium">Paid Leave</span>
+                <div className="flex flex-wrap items-center gap-4 px-2">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded bg-accent-primary bg-opacity-30 border border-accent-primary border-opacity-40" />
+                    <span className="text-[10px] text-text-muted font-medium">Paid Leave</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded bg-indigo-500 bg-opacity-30 border border-indigo-500 border-opacity-40" />
-                    <span className="text-xs text-text-muted font-medium">Casual Leave</span>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded bg-indigo-500 bg-opacity-30 border border-indigo-500 border-opacity-40" />
+                    <span className="text-[10px] text-text-muted font-medium">Casual Leave</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded bg-emerald-500 bg-opacity-30 border border-emerald-500 border-opacity-40" />
-                    <span className="text-xs text-text-muted font-medium">Public Holiday</span>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded bg-emerald-500 bg-opacity-30 border border-emerald-500 border-opacity-40" />
+                    <span className="text-[10px] text-text-muted font-medium">Public Holiday</span>
                   </div>
                 </div>
                 
                 <div className="flex flex-col xl:flex-row gap-8">
-                  <div className="xl:w-2/3 space-y-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {Array.from({ length: 12 }).map((_, i) => (
-                        <CalendarView 
-                          key={i}
-                          month={i}
-                          year={2026}
-                          onBreakClick={setSelectedBreak}
-                          holidays={holidays}
-                          vacationBlocks={vacationBlocks}
-                          selectedBreak={selectedBreak}
-                        />
-                      ))}
+                  <div className="xl:w-3/4 space-y-6">
+                    {/* Calendar Section - 4 months per row */}
+                    <div className="max-h-[calc(100vh-400px)] overflow-y-auto pr-2 custom-scrollbar">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {Array.from({ length: 12 }).map((_, i) => (
+                          <CalendarView 
+                            key={i}
+                            month={i}
+                            year={2026}
+                            onBreakClick={setSelectedBreak}
+                            holidays={holidays}
+                            vacationBlocks={vacationBlocks}
+                            selectedBreak={selectedBreak}
+                          />
+                        ))}
+                      </div>
                     </div>
                   </div>
-                  <div className="xl:w-1/3">
-                    <div className="sticky top-8">
+                  <div className="xl:w-1/4">
+                    {/* Right Sidebar - Trip Details, Travel Tip & Holidays */}
+                    <div className="sticky top-8 space-y-4 max-h-[calc(100vh-400px)] overflow-y-auto custom-scrollbar pr-2">
                       <ReasoningPanel selectedBreak={selectedBreak} audit={audit} />
+                      <HolidaySidebar />
                     </div>
                   </div>
                 </div>
@@ -176,10 +182,6 @@ function App() {
             )}
           </AnimatePresence>
         </div>
-        
-        <aside className="lg:col-span-1">
-          <HolidaySidebar />
-        </aside>
       </div>
       
       <footer className="mt-20 py-8 border-t border-border-glass text-center text-text-muted text-sm">

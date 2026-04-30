@@ -112,7 +112,7 @@ const CommandCenter = ({ onExecute, onUploadSuccess }) => {
             rows="1"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Feed me your holiday list and balances to unlock vacation mode! 🌴"
+            placeholder="I want vacation plans for December and March! 🌴"
             className="flex-1 bg-transparent border-none focus:ring-0 text-white placeholder-text-muted px-4 py-2 resize-none text-lg min-h-[44px]"
             style={{ overflow: 'hidden' }}
           />

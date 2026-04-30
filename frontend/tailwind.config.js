@@ -11,6 +11,7 @@ export default {
         'accent-secondary': '#ec4899',
         'bg-card': 'rgba(23, 23, 26, 0.7)',
         'text-muted': '#94a3b8',
+        'text-active': '#cbd5e1',
         'border-glass': 'rgba(255, 255, 255, 0.1)',
       },
     },

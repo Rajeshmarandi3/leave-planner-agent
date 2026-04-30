@@ -17,7 +17,7 @@ const HolidaySidebar = () => {
   ];
 
   return (
-    <div className="glass p-6 rounded-[32px] h-[calc(100vh-200px)] sticky top-6 overflow-hidden flex flex-col">
+    <div className="glass p-6 rounded-[32px] overflow-hidden flex flex-col">
       <div className="flex items-center gap-3 mb-6">
         <div className="p-2 bg-accent-primary bg-opacity-20 rounded-xl">
           <Calendar className="w-5 h-5 text-accent-primary" />
@@ -25,7 +25,7 @@ const HolidaySidebar = () => {
         <h2 className="text-xl font-bold">2026 Holidays</h2>
       </div>
 
-      <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-2">
+      <div className="overflow-y-auto space-y-3 custom-scrollbar pr-2 max-h-[400px]">
         {nationalHolidays.map((holiday, idx) => (
           <motion.div 
             key={idx}

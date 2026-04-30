@@ -26,10 +26,12 @@ async def optimize(request: OptimizeRequest):
     custom_holidays = None
     if request.holidays and len(request.holidays) > 0:
         custom_holidays = [h.dict() for h in request.holidays]
+    user_prompt = request.user_prompt or ""
     result = await agent.optimize_leaves(
         request.balances.dict(),
         request.preferences.dict(),
-        custom_holidays=custom_holidays
+        custom_holidays=custom_holidays,
+        user_prompt=user_prompt
     )
     return result
 
