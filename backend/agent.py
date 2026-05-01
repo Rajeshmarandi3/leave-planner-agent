@@ -378,28 +378,75 @@ class LeavePlanner:
     def _get_destination_images(self, month: int, travel_tip: str) -> List[str]:
         """Generate destination image URLs based on month and travel tip."""
         # Map months to destination keywords for image search
-        destination_keywords = {
-            1: ["Jaipur", "Hawa Mahal", "Rajasthan"],
-            2: ["Goa", "Beaches", "Arambol"],
-            3: ["Mathura", "Holi Festival", "Vrindavan"],
-            4: ["Kerala", "Backwaters", "Alleppey"],
-            5: ["Andaman", "Havelock Island", "Beach"],
-            6: ["Ladakh", "Leh", "Mountain"],
-            7: ["Munnar", "Tea Gardens", "Kerala"],
-            8: ["Meghalaya", "Cherrapunji", "Waterfall"],
-            9: ["Sikkim", "Gangtok", "Kanchenjunga"],
-            10: ["Mysore", "Palace", "Dasara"],
-            11: ["Pushkar", "Camel Fair", "Rajasthan"],
-            12: ["Auli", "Snow", "Himalayas"]
+        # Using Picsum and other reliable placeholder services
+        destination_images = {
+            1: [
+                "https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?w=800&h=600&fit=crop",
+                "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&h=600&fit=crop",
+                "https://images.unsplash.com/photo-1548013146-72479768bada?w=800&h=600&fit=crop"
+            ],
+            2: [
+                "https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=800&h=600&fit=crop",
+                "https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=800&h=600&fit=crop",
+                "https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=800&h=600&fit=crop"
+            ],
+            3: [
+                "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&h=600&fit=crop",
+                "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&h=600&fit=crop",
+                "https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=800&h=600&fit=crop"
+            ],
+            4: [
+                "https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=800&h=600&fit=crop",
+                "https://images.unsplash.com/photo-1533105079780-92b9be482077?w=800&h=600&fit=crop",
+                "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=800&h=600&fit=crop"
+            ],
+            5: [
+                "https://images.unsplash.com/photo-1514222134-b57cbb8ce073?w=800&h=600&fit=crop",
+                "https://images.unsplash.com/photo-1477587458883-47145ed94245?w=800&h=600&fit=crop",
+                "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=800&h=600&fit=crop"
+            ],
+            6: [
+                "https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?w=800&h=600&fit=crop",
+                "https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=800&h=600&fit=crop",
+                "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&h=600&fit=crop"
+            ],
+            7: [
+                "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&h=600&fit=crop",
+                "https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=800&h=600&fit=crop",
+                "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&h=600&fit=crop"
+            ],
+            8: [
+                "https://images.unsplash.com/photo-1548013146-72479768bada?w=800&h=600&fit=crop",
+                "https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=800&h=600&fit=crop",
+                "https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=800&h=600&fit=crop"
+            ],
+            9: [
+                "https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=800&h=600&fit=crop",
+                "https://images.unsplash.com/photo-1514222134-b57cbb8ce073?w=800&h=600&fit=crop",
+                "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=800&h=600&fit=crop"
+            ],
+            10: [
+                "https://images.unsplash.com/photo-1533105079780-92b9be482077?w=800&h=600&fit=crop",
+                "https://images.unsplash.com/photo-1477587458883-47145ed94245?w=800&h=600&fit=crop",
+                "https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?w=800&h=600&fit=crop"
+            ],
+            11: [
+                "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=800&h=600&fit=crop",
+                "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&h=600&fit=crop",
+                "https://images.unsplash.com/photo-1548013146-72479768bada?w=800&h=600&fit=crop"
+            ],
+            12: [
+                "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&h=600&fit=crop",
+                "https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=800&h=600&fit=crop",
+                "https://images.unsplash.com/photo-1514222134-b57cbb8ce073?w=800&h=600&fit=crop"
+            ]
         }
         
-        keywords = destination_keywords.get(month, ["Travel", "Destination", "Landscape"])
-        # Generate 3-4 Unsplash image URLs with different keywords
-        images = []
-        for i, keyword in enumerate(keywords[:3]):
-            images.append(f"https://source.unsplash.com/800x600/?{keyword.lower().replace(' ', ',')}")
-        
-        return images
+        return destination_images.get(month, [
+            "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&h=600&fit=crop",
+            "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=800&h=600&fit=crop",
+            "https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=800&h=600&fit=crop"
+        ])
 
 
 # ════════════════════════════════════════════════════════════
