@@ -33,12 +33,12 @@ const ReasoningPanel = ({ selectedBreak, audit }) => {
                 </p>
               </div>
 
-              <div className="bg-accent-primary bg-opacity-10 p-3 rounded-2xl border border-accent-primary border-opacity-30 flex flex-col">
+              <div className="bg-accent-primary bg-opacity-10 p-5 rounded-2xl border border-accent-primary border-opacity-30 flex flex-col">
                 <div className="flex items-center gap-1.5 mb-2">
                   <MapPin className="w-3.5 h-3.5 text-accent-primary" />
                   <h3 className="text-accent-primary font-medium text-xs">Expert Travel Tip</h3>
                 </div>
-                <p className="text-[10px] text-text-active leading-relaxed line-clamp-6 overflow-hidden">
+                <p className="text-xs text-text-active leading-relaxed line-clamp-10 overflow-hidden">
                   {selectedBreak.travel_tip}
                 </p>
               </div>
