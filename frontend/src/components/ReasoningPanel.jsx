@@ -14,8 +14,8 @@ const ReasoningPanel = ({ selectedBreak, audit }) => {
             exit={{ opacity: 0, x: -20 }}
             className="space-y-3 flex-1 overflow-hidden flex flex-col"
           >
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white bg-opacity-5 p-3 rounded-2xl border border-border-glass flex flex-col">
+            <div className="flex flex-col gap-3">
+              <div className="bg-white bg-opacity-5 p-5 rounded-2xl border border-border-glass flex flex-col">
                 <div className="flex items-center gap-1.5 mb-2">
                   <Info className="w-3.5 h-3.5 text-accent-secondary" />
                   <h3 className="text-accent-secondary font-medium text-xs">Trip Details</h3>
@@ -28,7 +28,7 @@ const ReasoningPanel = ({ selectedBreak, audit }) => {
                   {new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(selectedBreak.end_date))}
                 </p>
 
-                <p className="text-[10px] text-text-muted leading-relaxed line-clamp-4 overflow-hidden">
+                <p className="text-[10px] text-text-muted leading-relaxed line-clamp-6 overflow-hidden">
                   {selectedBreak.reason}
                 </p>
               </div>
