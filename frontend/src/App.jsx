@@ -107,23 +107,9 @@ function App() {
                 transition={{ duration: 0.6, ease: "easeOut" }}
                 className="space-y-6 w-full"
               >
-                <div className="glass p-6 rounded-[40px] mb-6 border-white border-opacity-10">
-                  <h3 className="text-accent-primary font-bold uppercase tracking-widest text-[10px] mb-3">Expert Strategy Overview</h3>
-                  <p className="text-base font-medium leading-relaxed mb-4">{planSummary}</p>
-                  
-                  {isAnalyzed && balances.paid + balances.casual > 0 && (
-                    <div className="pt-4 border-t border-white border-opacity-5">
-                      <h4 className="text-white font-bold text-xs mb-1">Expert Recommendation:</h4>
-                      <p className="text-text-muted text-xs italic leading-relaxed">
-                        "As your leave planner expert, I've utilized all {balances.paid} paid days and {balances.casual} casual days 
-                        ({totalLeaveDays} total weekday leaves) across {vacationBlocks.length} vacation blocks to ensure optimal coverage every month. 
-                        Sick leave is fully reserved for emergencies as requested."
-                      </p>
-                    </div>
-                  )}
+                <div className="top-0 z-30 bg-[#0a0a0f]/90 backdrop-blur-md py-4 -mx-6 px-6">
+                  <BalanceManager balances={balances} onUpdate={updateBalance} />
                 </div>
-
-                <BalanceManager balances={balances} onUpdate={updateBalance} />
 
                 {/* Calendar Legend */}
                 <div className="flex flex-wrap items-center gap-4 px-2">
@@ -141,10 +127,10 @@ function App() {
                   </div>
                 </div>
                 
-                <div className="flex flex-col xl:flex-row gap-8">
+                <div className="flex flex-col xl:flex-row gap-8 items-start">
                   <div className="xl:w-3/4 space-y-6">
                     {/* Calendar Section - 4 months per row */}
-                    <div className="max-h-[calc(100vh-400px)] overflow-y-auto pr-2 custom-scrollbar">
+                    <div className="overflow-y-auto pr-2 custom-scrollbar">
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
                         {Array.from({ length: 12 }).map((_, i) => (
                           <CalendarView 
@@ -160,11 +146,11 @@ function App() {
                       </div>
                     </div>
                   </div>
-                  <div className="xl:w-1/4">
+                  <div className="xl:w-1/4 xl:sticky xl:top-8 xl:h-fit">
                     {/* Right Sidebar - Trip Details, Travel Tip & Holidays */}
-                    <div className="sticky top-8 space-y-4 max-h-[calc(100vh-400px)] overflow-y-auto custom-scrollbar pr-2">
+                    <div className="space-y-4 overflow-visible custom-scrollbar pr-2">
                       <ReasoningPanel selectedBreak={selectedBreak} audit={audit} />
-                      <HolidaySidebar />
+                      {/* <HolidaySidebar /> */}
                     </div>
                   </div>
                 </div>
@@ -184,9 +170,6 @@ function App() {
         </div>
       </div>
       
-      <footer className="mt-20 py-8 border-t border-border-glass text-center text-text-muted text-sm">
-        Leave Planner Agent • Powered by Gemini Intelligence • 2026 Edition
-      </footer>
     </Layout>
   );
 }
