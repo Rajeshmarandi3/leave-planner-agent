@@ -1,6 +1,7 @@
 import React from 'react';
 import { Info, MapPin } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import DestinationCarousel from './DestinationCarousel';
 
 const ReasoningPanel = ({ selectedBreak, audit }) => {
   return (
@@ -38,6 +39,13 @@ const ReasoningPanel = ({ selectedBreak, audit }) => {
                   <MapPin className="w-3.5 h-3.5 text-accent-primary" />
                   <h3 className="text-accent-primary font-medium text-xs">Expert Travel Tip</h3>
                 </div>
+                
+                {/* AI-Recommended Destination Carousel */}
+                <DestinationCarousel 
+                  images={selectedBreak.destination_images || []}
+                  destinationName={selectedBreak.name || 'Recommended Destination'}
+                />
+                
                 <p className="text-xs text-text-active leading-relaxed line-clamp-10 overflow-hidden">
                   {selectedBreak.travel_tip}
                 </p>

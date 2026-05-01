@@ -32,6 +32,7 @@ class VacationBlock(BaseModel):
     leave_details: List[LeaveDetail] = []
     reason: str
     travel_tip: Optional[str] = None
+    destination_images: Optional[List[str]] = []  # AI-recommended destination images
 
 class OptimizeRequest(BaseModel):
     balances: LeaveBalances

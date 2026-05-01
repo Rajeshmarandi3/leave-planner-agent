@@ -360,6 +360,9 @@ class LeavePlanner:
                 f"Efficiency: {break_len / n_leaves:.1f}× multiplier."
             )
 
+            # Generate destination images based on month/travel tip
+            destination_images = self._get_destination_images(month, MONTH_TIPS.get(month, ""))
+
             result.append({
                 "name": nice_name,
                 "start_date": blk["start"].isoformat(),
@@ -368,8 +371,35 @@ class LeavePlanner:
                 "leave_details": leave_details,
                 "reason": reason,
                 "travel_tip": MONTH_TIPS.get(month, "Explore something new!"),
+                "destination_images": destination_images,
             })
         return result
+
+    def _get_destination_images(self, month: int, travel_tip: str) -> List[str]:
+        """Generate destination image URLs based on month and travel tip."""
+        # Map months to destination keywords for image search
+        destination_keywords = {
+            1: ["Jaipur", "Hawa Mahal", "Rajasthan"],
+            2: ["Goa", "Beaches", "Arambol"],
+            3: ["Mathura", "Holi Festival", "Vrindavan"],
+            4: ["Kerala", "Backwaters", "Alleppey"],
+            5: ["Andaman", "Havelock Island", "Beach"],
+            6: ["Ladakh", "Leh", "Mountain"],
+            7: ["Munnar", "Tea Gardens", "Kerala"],
+            8: ["Meghalaya", "Cherrapunji", "Waterfall"],
+            9: ["Sikkim", "Gangtok", "Kanchenjunga"],
+            10: ["Mysore", "Palace", "Dasara"],
+            11: ["Pushkar", "Camel Fair", "Rajasthan"],
+            12: ["Auli", "Snow", "Himalayas"]
+        }
+        
+        keywords = destination_keywords.get(month, ["Travel", "Destination", "Landscape"])
+        # Generate 3-4 Unsplash image URLs with different keywords
+        images = []
+        for i, keyword in enumerate(keywords[:3]):
+            images.append(f"https://source.unsplash.com/800x600/?{keyword.lower().replace(' ', ',')}")
+        
+        return images
 
 
 # ════════════════════════════════════════════════════════════
